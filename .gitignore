@@ -1,0 +1,19 @@
+# Firebase / Local cache
+.firebase/
+.firebaserc
+.DS_Store
+Thumbs.db
+*.log
+
+# Sensitive development logs
+conversation_history*.md
+
+# Local development scripts
+*.ps1
+*.vbs
+*.bat
+
+# 大容量ダウンロードzip（Gitに含めない場合）
+downloads/*.zip
+!downloads/README.md
+

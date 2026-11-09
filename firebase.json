@@ -1,0 +1,36 @@
+{
+  "hosting": {
+    "site": "yukiyanart-feedback-hub",
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      "**/.*",
+      "**/node_modules/**",
+      "**/*.md",
+      "**/*.ps1",
+      "**/*.vbs",
+      "**/*.bat",
+      "**/*.log"
+    ],
+    "headers": [
+      {
+        "source": "/downloads/**",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/zip"
+          },
+          {
+            "key": "Content-Disposition",
+            "value": "attachment"
+          },
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      }
+    ]
+  }
+}
