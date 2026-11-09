@@ -1,0 +1,8 @@
+# Firebase / Local cache
+.firebase/
+.DS_Store
+Thumbs.db
+*.log
+# 大容量ダウンロードzip（Gitに含めない場合）
+downloads/*.zip
+!downloads/README.md

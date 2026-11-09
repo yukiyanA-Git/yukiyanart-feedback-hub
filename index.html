@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>yukiyanArt App Portal & Feedback Hub</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4F46E5">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Firebase SDKs (Compat versions for smooth web integration) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="firebase_config.js"></script>
+</head>
+<body>
+  <!-- 1. Full HD App Opening Splash Screen (1.2 seconds intro) -->
+  <div id="splashScreen" class="splash-screen">
+    <div class="splash-content">
+      <img src="assets/icons/yukiyanart_splash_fhd.jpg" class="splash-logo-fhd" alt="yukiyanArt Full HD Logo">
+    </div>
+  </div>
+
+  <div class="app-container">
+    <!-- Header with Pop Logo + Brand Text + Chic Badge -->
+    <header class="app-header">
+      <div class="header-title">
+        <img src="assets/icons/yukiyanart_logo.jpg" class="header-brand-logo" alt="yukiyanArt Pop Logo" style="width:44px!important; height:44px!important; max-width:44px!important; max-height:44px!important; flex-shrink:0; border-radius:12px; object-fit:cover;" onerror="this.style.display='none';">
+        <div class="brand-text-wrap">
+          <span class="brand-title">yukiyanArt Hub & Portal</span>
+          <span class="brand-subtitle">yukiyanArt Official App Portal (ユキヤナート)</span>
+        </div>
+        <!-- Chic Monogram Badge -->
+        <img src="assets/icons/yukiyanart_chic_badge.jpg" class="header-chic-badge" alt="yukiyanArt Chic Monogram Badge" width="42" height="42" style="width:42px!important; height:42px!important; max-width:42px!important; max-height:42px!important; min-width:42px!important; min-height:42px!important; flex-shrink:0; border-radius:10px; object-fit:cover; display:inline-block;">
+      </div>
+      <div class="header-right">
+        <!-- Admin Notification Bell (Only visible for logged in Admin) -->
+        <div class="admin-notif-bell" id="adminNotifBell" style="display: none;" onclick="toggleNotifDropdown()">
+          <i class="fa-solid fa-bell"></i>
+          <span class="notif-badge" id="notifCount">0</span>
+          <div class="notif-dropdown" id="notifDropdown">
+            <div class="notif-header">🔔 yukiyanArt 管理者通知</div>
+            <div class="notif-items" id="notifItems">
+              <div class="notif-empty">新着の要望はありません</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dedicated Admin Login / Auth Status Button -->
+        <div class="admin-auth-area">
+          <button class="btn-admin-auth" id="adminAuthBtn" onclick="handleAdminAuthClick()">
+            <i class="fa-solid fa-user-shield"></i> <span id="adminAuthBtnText">管理者ログイン</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Simulated Deep Link Bar with Real Apps -->
+    <div class="deeplink-simulator">
+      <span class="sim-label"><i class="fa-solid fa-link"></i> 各アプリからのリンク移動テスト:</span>
+      <button class="sim-btn" onclick="simulateDeepLink('chronos')">Chronosから開く</button>
+      <button class="sim-btn" onclick="simulateDeepLink('sub_monitor_manager')">SubMonitorから開く</button>
+      <button class="sim-btn" onclick="simulateDeepLink('widget_de_news')">widgetでnewsから開く</button>
+      <button class="sim-btn" onclick="simulateDeepLink('numpre_shift')">動くナンプレから開く</button>
+      <button class="sim-btn" onclick="simulateDeepLink('hex_bastion')">HEX BASTIONから開く</button>
+      <button class="sim-btn secondary" onclick="simulateDeepLink(null)">全アプリ表示</button>
+    </div>
+
+    <!-- Main Navigation Tabs (1ページ目: ポータル・起動 / 2ページ目: 掲示板 / 3ページ目: お知らせ) -->
+    <nav class="main-tabs">
+      <button class="tab-btn active" id="tabPortal" onclick="switchMainTab('portal')">
+        <i class="fa-solid fa-rocket"></i> 1ページ目: アプリ起動 ＆ ポータル
+      </button>
+      <button class="tab-btn" id="tabApps" onclick="switchMainTab('apps')">
+        <i class="fa-solid fa-comments"></i> 2ページ目: お問い合わせ掲示板
+      </button>
+      <button class="tab-btn" id="tabNews" onclick="switchMainTab('news')">
+        <i class="fa-solid fa-bullhorn"></i> 公式アップデート・お知らせ
+      </button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="content-area">
+      <!-- Section 0: Portal & App Launch (1ページ目: メイン画面) -->
+      <section id="sectionPortal" class="tab-content active">
+        <div class="section-intro">
+          <h2><i class="fa-solid fa-shapes"></i> yukiyanArt 公式アプリ全16作品 一覧＆起動</h2>
+          <p class="sub-text">Webアドレスを教えるだけで1秒で使えるWebアプリ型と、PCに直接常駐する高機能PCインストール型をワンクリック起動！</p>
+        </div>
+
+        <!-- Portal Apps Grid (Auto-Expanding Grid for All Apps) -->
+        <div class="portal-apps-grid" id="portalAppsGrid">
+          <!-- Rendered dynamically from app.js -->
+        </div>
+      </section>
+
+      <!-- Section 1: App Grid & Board (2ページ目: お問い合わせ掲示板) -->
+      <section id="sectionApps" class="tab-content">
+        <div class="section-intro">
+          <h2><i class="fa-solid fa-comments"></i> 各アプリのご質問・ご意見・サポート窓口</h2>
+          <p class="sub-text">各アプリの質問・修正要望の投稿や掲示板の確認ができます。（完全匿名）</p>
+        </div>
+
+        <!-- Apps Grid for Support Select -->
+        <div class="apps-grid" id="appsGrid">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Board Section (Selected App's Forum) -->
+        <div class="board-container" id="boardContainer">
+          <div class="board-header">
+            <div class="selected-app-info" id="selectedAppInfo">
+              <!-- Rendered dynamically -->
+            </div>
+            <button class="btn-primary" id="openPostModalBtn" onclick="openPostModal()">
+              <i class="fa-solid fa-pen-to-square"></i> このアプリに要望・報告を書く
+            </button>
+          </div>
+
+          <!-- Board Filters -->
+          <div class="board-filters">
+            <button class="filter-chip active" onclick="filterBoard('all')">すべて</button>
+            <button class="filter-chip" onclick="filterBoard('bug')">🐛 修正要望</button>
+            <button class="filter-chip" onclick="filterBoard('feature')">💡 内容要望</button>
+            <button class="filter-chip" onclick="filterBoard('other')">💬 その他</button>
+          </div>
+
+          <!-- Posts List -->
+          <div class="posts-list" id="postsList">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2: Official News & Updates (3ページ目: お知らせ) -->
+      <section id="sectionNews" class="tab-content">
+        <div class="section-intro-news">
+          <div>
+            <h2><i class="fa-solid fa-bullhorn"></i> yukiyanArt 公式お知らせ・更新情報</h2>
+            <p class="sub-text">開発者からの最新修正点、更新内容、お知らせを発信しています。</p>
+          </div>
+          <button class="btn-admin-primary" id="adminNewNewsBtn" onclick="openNewsModal()" style="display: none;">
+            <i class="fa-solid fa-plus"></i> お知らせを新規作成 (管理者認証済み)
+          </button>
+        </div>
+
+        <div class="news-list" id="newsList">
+          <!-- Rendered dynamically -->
+        </div>
+      </section>
+
+      <!-- Acrylic House Ad Slider Frame Section (Dynamic Auto-Rotating Banner) -->
+      <div class="acrylic-ad-section">
+        <div class="acrylic-ad-frame" id="acrylicAdFrameContainer">
+          <div class="acrylic-ad-inner">
+            <div class="acrylic-ad-header">
+              <span class="sparkle-label"><i class="fa-solid fa-wand-magic-sparkles"></i> PREMIUM PARTNER / 自社おすすめアプリ</span>
+              <span class="sponsored-badge">SPONSORED BY yukiyanArt</span>
+            </div>
+            
+            <!-- Dynamic Auto Slides Container -->
+            <div class="ad-slider-viewport">
+              <button class="slider-arrow left" onclick="moveAdSlide(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+              <button class="slider-arrow right" onclick="moveAdSlide(1)"><i class="fa-solid fa-chevron-right"></i></button>
+              <div class="ad-slider-track" id="adSliderTrack">
+                <!-- Dynamically populated slides from JS -->
+              </div>
+            </div>
+
+            <!-- Slide Dots Indicator -->
+            <div class="slider-dots" id="sliderDotsContainer">
+              <!-- Dynamically populated dots -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Modal 0: Download & Install Instructions Modal -->
+    <div class="modal-overlay" id="downloadModalOverlay">
+      <div class="modal-card" style="max-width: 580px;">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-box-open" style="color: var(--primary);"></i> <span id="downloadModalAppName">アプリ</span> の入手・手順案内</h3>
+          <button class="close-btn" onclick="closeDownloadModal()">&times;</button>
+        </div>
+        <div style="margin-bottom: 20px;">
+          <p class="sub-text" id="downloadModalAppDesc" style="margin-bottom: 14px; color: #334155; font-size: 0.9rem; line-height: 1.5;"></p>
+          
+          <div id="modalWebUrlWrap" style="display: none; background: #EEF2FF; border: 1px solid #C7D2FE; padding: 12px 16px; border-radius: 10px; margin-bottom: 18px;">
+            <div style="font-size: 0.82rem; font-weight: 700; color: #3730A3; margin-bottom: 4px;">🌐 Web版専用アドレス (ブラウザで即起動)</div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+              <code id="modalWebUrlText" style="font-size: 0.85rem; color: #1E1B4B; font-weight: 600; word-break: break-all;"></code>
+              <button class="sim-btn" onclick="copyModalWebUrl()"><i class="fa-regular fa-copy"></i> コピー</button>
+            </div>
+          </div>
+
+          <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+            <h4 style="font-size: 0.92rem; font-weight: 700; color: var(--text-main); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-list-check" style="color: #059669;"></i> 簡単3ステップ ご利用手順（インストール不要）
+            </h4>
+            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.85rem; color: #475569;">
+              <div style="display: flex; gap: 10px; align-items: flex-start;">
+                <span style="background: #059669; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; margin-top: 2px;">1</span>
+                <span>下の<b>「ZIPファイルをダウンロード」</b>ボタンを押して、配布パッケージ (<code id="modalZipFileName" style="color:#059669; font-weight:bold;">app.zip</code>) を保存します。</span>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: flex-start;">
+                <span style="background: #059669; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; margin-top: 2px;">2</span>
+                <span>ダウンロードしたZIPファイルを右クリックし、<b>「すべて展開（解凍）」</b>を選択します。</span>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: flex-start;">
+                <span style="background: #059669; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; margin-top: 2px;">3</span>
+                <span>解凍されたフォルダ内の実行ファイル (<code id="modalExeFileName" style="color:#4F46E5; font-weight:bold;">App.exe</code>) をダブルクリックするだけで即起動・常駐完了！<br><span style="color:#64748B; font-size:0.8rem;">※面倒なインストール画面は不要で、そのまま直接ご使用いただけます。</span></span>
+              </div>
+            </div>
+            <div style="margin-top: 12px; font-size: 0.78rem; color: #64748B; background: #F1F5F9; padding: 8px 12px; border-radius: 8px; line-height: 1.4;">
+              💡 <b>ワンポイント：</b> 初回起動時に「WindowsによってPCが保護されました」と青い警告が出た場合は、画面内の<b>「詳細情報」</b>をクリックして<b>「実行」</b>を押してください。
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+            <button class="btn-secondary" onclick="closeDownloadModal()">閉じる</button>
+            <button class="btn-primary" id="modalZipDownloadBtn" onclick="triggerDirectZipDownload()" style="background: #059669;">
+              <i class="fa-solid fa-download"></i> ZIPファイルを直接ダウンロード
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 1: New Post Modal (Popup for User Feedback) -->
+    <div class="modal-overlay" id="postModalOverlay">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-comment-dots"></i> <span id="modalTargetAppName">アプリ</span> への要望・不具合報告</h3>
+          <button class="close-btn" onclick="closePostModal()">&times;</button>
+        </div>
+        <form id="postForm" onsubmit="handlePostSubmit(event)">
+          <div class="form-group">
+            <label>種別</label>
+            <div class="category-options">
+              <label class="cat-radio"><input type="radio" name="category" value="bug" checked> <span>🐛 修正要望</span></label>
+              <label class="cat-radio"><input type="radio" name="category" value="feature"> <span>💡 内容要望</span></label>
+              <label class="cat-radio"><input type="radio" name="category" value="other"> <span>💬 その他</span></label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="postTitle">件名・タイトル</label>
+            <input type="text" id="postTitle" placeholder="例: ○○画面でボタンが反応しない" required>
+          </div>
+          <div class="form-group">
+            <label for="postContent">具体的内容・起きている事象</label>
+            <textarea id="postContent" rows="5" placeholder="発生した状況や改善してほしい点をご記入ください。（匿名で送信されます）" required></textarea>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" onclick="closePostModal()">キャンセル</button>
+            <button type="submit" class="btn-primary"><i class="fa-solid fa-paper-plane"></i> 送信する</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal 2: Admin Login Modal (with Whitelist Accounts & Real Google Auth) -->
+    <div class="modal-overlay" id="adminLoginModalOverlay">
+      <div class="modal-card" style="max-width: 440px;">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-user-shield" style="color: var(--admin-color);"></i> yukiyanArt 管理者認証</h3>
+          <button class="close-btn" onclick="closeAdminLoginModal()">&times;</button>
+        </div>
+        <div style="margin-bottom: 20px;">
+          <p class="sub-text" style="font-size: 0.85rem; margin-bottom: 14px;">
+            登録済みの管理者 Google アカウントでログインしてください。
+          </p>
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+            <button class="btn-google-login" onclick="triggerRealGoogleAuth()">
+              <i class="fa-brands fa-google" style="color: #4285F4;"></i> Google アカウントでポップアップサインイン
+            </button>
+            <div style="text-align: center; margin: 6px 0; font-size: 0.78rem; color: #94A3B8;">— 登録済みアドレスからワンクリック選択 —</div>
+            <button class="btn-google-login" onclick="loginWithGoogleAccount('yukiyana1983@gmail.com')">
+              <i class="fa-brands fa-google" style="color: #4285F4;"></i> yukiyana1983@gmail.com
+            </button>
+            <button class="btn-google-login" onclick="loginWithGoogleAccount('mabouslim@gmail.com')">
+              <i class="fa-brands fa-google" style="color: #EA4335;"></i> mabouslim@gmail.com
+            </button>
+          </div>
+        </div>
+        <div style="border-top: 1px solid var(--border-color); padding-top: 16px;">
+          <form onsubmit="handleAdminEmailInputLogin(event)">
+            <div class="form-group">
+              <label for="adminEmailInput">管理者 Google アドレスの直接入力</label>
+              <input type="email" id="adminEmailInput" placeholder="例: yukiyana1983@gmail.com" required>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn-secondary" onclick="closeAdminLoginModal()">キャンセル</button>
+              <button type="submit" class="btn-admin-primary"><i class="fa-solid fa-key"></i> 認証する</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 3: Admin News Creation Modal -->
+    <div class="modal-overlay" id="newsModalOverlay">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-bullhorn"></i> 新規お知らせ・更新情報の発信 (管理者モード)</h3>
+          <button class="close-btn" onclick="closeNewsModal()">&times;</button>
+        </div>
+        <form id="newsForm" onsubmit="handleNewsSubmit(event)">
+          <div class="form-group">
+            <label for="newsTargetApp">対象アプリ</label>
+            <select id="newsTargetApp" required>
+              <option value="all">【全アプリ共通】</option>
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="newsTag">タグ</label>
+            <select id="newsTag">
+              <option value="update">🚀 アプリアップデート</option>
+              <option value="fix">🔧 修正完了</option>
+              <option value="info">📢 重要なお知らせ</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="newsTitle">タイトル</label>
+            <input type="text" id="newsTitle" placeholder="例: Ver 1.2.0 リリースのお知らせ" required>
+          </div>
+          <div class="form-group">
+            <label for="newsContent">本文</label>
+            <textarea id="newsContent" rows="6" placeholder="更新内容や修正した点を記載してください。" required></textarea>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" onclick="closeNewsModal()">キャンセル</button>
+            <button type="submit" class="btn-admin-primary"><i class="fa-solid fa-bullhorn"></i> 公式発信する</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW reg error:', err));
+    }
+  </script>
+</body>
+</html>

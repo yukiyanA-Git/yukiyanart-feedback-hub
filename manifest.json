@@ -1,0 +1,17 @@
+{
+  "name": "yukiyanArt App Feedback Hub",
+  "short_name": "yukiyanArt Hub",
+  "description": "yukiyanArt 公式統合要望受付窓口＆アプリアップデート情報",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0B0F17",
+  "theme_color": "#4F46E5",
+  "icons": [
+    {
+      "src": "assets/icons/yukiyanart_logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
