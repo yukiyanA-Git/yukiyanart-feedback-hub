@@ -1,10 +1,14 @@
 {
+  "firestore": {
+    "rules": "firestore.rules"
+  },
   "hosting": {
     "site": "yukiyanart-feedback-hub",
     "public": ".",
     "ignore": [
       "firebase.json",
       ".firebaserc",
+      "firestore.rules",
       "**/.*",
       "**/node_modules/**",
       "**/*.md",

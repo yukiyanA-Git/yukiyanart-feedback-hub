@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ==========================================
+    // 1. スケマチ (sukemachi / chosei-proto)
+    // ==========================================
+    // 出欠調整イベント: URL共有での閲覧・回答・管理を許可（削除禁止・adminPinHash保護）
+    match /skm_events/{eventId} {
+      allow read: if true;
+      allow create: if request.resource.data.id == eventId;
+      allow update: if request.resource.data.id == eventId
+                    && (!('adminPinHash' in resource.data) || request.resource.data.adminPinHash == resource.data.adminPinHash);
+      allow delete: if false;
+    }
+
+    // ==========================================
+    // 2. からだノート (karada-note)
+    // ==========================================
+    // ユーザー個人データ（本人のみ読み書き）
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // みんなのノート（匿名共有タイムライン）
+    match /public_notes/{noteId} {
+      // 全ユーザー閲覧可能（未ログイン・オフラインキャッシュ含む）
+      allow read: if true;
+
+      // 投稿の新規作成・更新: 必須フィールドの検証と安全制限
+      allow create, update: if request.resource.data.keys().hasAll(['id', 'part', 'datetime', 'content'])
+                            && request.resource.data.content is string
+                            && request.resource.data.content.size() <= 1000
+                            && request.resource.data.part is string;
+
+      // 投稿の削除（※やなぎさん検討中のため現状維持）
+      allow delete: if true;
+    }
+
+    // ==========================================
+    // 3. Feedback Hub (yukiyanart-feedback-hub)
+    // ==========================================
+    // 要望・フィードバック投稿 & 公式お知らせ
+    match /feedbacks/{feedbackId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if request.auth != null;
+    }
+
+    match /official_news/{newsId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
